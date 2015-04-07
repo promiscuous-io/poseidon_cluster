@@ -155,10 +155,12 @@ class Poseidon::ConsumerGroup
   end
 
   # Reloads metadata/broker/partition information
-  def reload
-    @metadata = @topic_metadata = nil
+  def reload_metadata
+    @metadata = nil; @topic_metadata = nil
     metadata
-    self
+    topic_metadata
+
+    true
   end
 
   # Closes the consumer group gracefully, only really useful in tests
@@ -373,7 +375,7 @@ class Poseidon::ConsumerGroup
         @pending = nil
 
         release_all!
-        reload
+        reload_metadata
 
         ids = zk.children(registries[:consumer], watch: true)
         pms = partitions
