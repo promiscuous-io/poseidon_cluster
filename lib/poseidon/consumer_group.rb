@@ -404,14 +404,20 @@ class Poseidon::ConsumerGroup
     # Claim the ownership of the partition for this consumer
     # @raise [Timeout::Error]
     def claim!(partition)
-      path = claim_path(partition)
-      Timeout.timeout options[:claim_timout] || DEFAULT_CLAIM_TIMEOUT do
-        while zk.create(path, id, ephemeral: true, ignore: :node_exists).nil?
-          return if @pending
-          sleep(0.1)
-        end
+      sleep_duration = 0.1
+      num_tries = ((options[:claim_timout] || DEFAULT_CLAIM_TIMEOUT)/sleep_duration).floor.to_i
+      created = nil
+
+      num_tries.times do
+        created = zk.create(claim_path(partition), id, {:ephemeral => true, :ignore => :node_exists})
+        break if created
+
+        sleep(sleep_duration)
       end
-      Consumer.new self, partition, options.dup
+
+      return nil unless created
+
+      Consumer.new(self, partition, options.dup)
     end
 
     # Release ownership of the partition
