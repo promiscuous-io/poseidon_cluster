@@ -368,28 +368,21 @@ class Poseidon::ConsumerGroup
     # * let POS be our index position in CG and let N = size(PT)/size(CG)
     # * assign partitions from POS*N to (POS+1)*N-1
     def rebalance!
-      return if @pending
-
-      @pending = true
       @mutex.synchronize do
-        @pending = nil
-
         release_all!
         reload_metadata
 
-        ids = zk.children(registries[:consumer], watch: true)
-        pms = partitions
-        rng = self.class.pick(pms.size, ids, id)
+        consumer_ids    = zk.children(registries[:consumer], {:watch => true}).sort
+        partition_list  = partitions
+        responsible_for = self.class.pick(partition_list.size, consumer_ids, id)
 
-        pms[rng].each do |pm|
-          if @pending
-            release_all!
-            break
+        return if responsible_for.nil?
+
+        partition_list[responsible_for].each do |partition|
+          if consumer = claim!(partition.id)
+            @consumers.push(consumer)
           end
-
-          consumer = claim!(pm.id)
-          @consumers.push(consumer) if consumer
-        end if rng
+        end
       end
     end
 
@@ -441,5 +434,4 @@ class Poseidon::ConsumerGroup
     def consumer_path
       "#{registries[:consumer]}/#{id}"
     end
-
 end
