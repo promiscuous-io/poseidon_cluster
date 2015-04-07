@@ -397,6 +397,8 @@ class Poseidon::ConsumerGroup
     def release_all!
       @consumers.each {|c| release!(c.partition) }
       @consumers.clear
+
+      true
     end
 
   private
