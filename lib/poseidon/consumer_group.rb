@@ -41,7 +41,6 @@ class Poseidon::ConsumerGroup
       options.delete(:trail)
       super group.id, broker.host, broker.port, group.topic, partition, offset, options
     end
-
   end
 
   # @param [Integer] pnum number of partitions size
@@ -147,8 +146,8 @@ class Poseidon::ConsumerGroup
     registries.each do |_, path|
       zk.mkdir_p(path)
     end
-    zk.create(consumer_path, "{}", ephemeral: true)
-    zk.register(registries[:consumer]) {|_| rebalance! }
+    zk.create(consumer_path, "{}", {:ephemeral => true})
+    zk.register(registries[:consumer]) { rebalance! }
 
     # Rebalance
     rebalance!
@@ -178,7 +177,7 @@ class Poseidon::ConsumerGroup
   # @param [Integer] partition
   # @return [Integer] the latest stored offset for the given partition
   def offset(partition)
-    data, _ = zk.get offset_path(partition), ignore: :no_node
+    data, _ = zk.get(offset_path(partition), {:ignore => :no_node})
     data.to_i
   end
 
@@ -186,9 +185,9 @@ class Poseidon::ConsumerGroup
   # @param [Integer] partition
   # @param [Integer] offset
   def commit(partition, offset)
-    zk.set offset_path(partition), offset.to_s
+    zk.set(offset_path(partition), offset.to_s)
   rescue ZK::Exceptions::NoNode
-    zk.create offset_path(partition), offset.to_s, ignore: :node_exists
+    zk.create(offset_path(partition), offset.to_s, {:ignore => :node_exists})
   end
 
   # Sorted partitions by broker address (so partitions on the same broker are clustered together)
@@ -198,7 +197,7 @@ class Poseidon::ConsumerGroup
 
     topic_metadata.available_partitions.sort_by do |part|
       broker = metadata.brokers[part.leader]
-      [broker.host, broker.port].join(":")
+      [broker.host, broker.port].join(':')
     end
   end
 
@@ -239,6 +238,7 @@ class Poseidon::ConsumerGroup
     unless opts[:commit] == false || commit == false
       commit consumer.partition, consumer.offset
     end
+
     true
   end
 
@@ -345,7 +345,7 @@ class Poseidon::ConsumerGroup
       # Yield over an empty array if nothing claimed,
       # to allow user to e.g. break out of the loop
       unless ok
-        yield -1, []
+        yield(-1, [])
       end
 
       # Sleep if either not claimes or nothing returned
@@ -414,7 +414,7 @@ class Poseidon::ConsumerGroup
 
     # Release ownership of the partition
     def release!(partition)
-      zk.delete claim_path(partition), ignore: :no_node
+      zk.delete(claim_path(partition), {:ignore => :no_node})
     end
 
     # @return [String] zookeeper ownership claim path
