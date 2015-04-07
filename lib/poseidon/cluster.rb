@@ -1,8 +1,8 @@
 require 'socket'
-require 'timeout'
-require 'zk'
-require 'poseidon'
 require 'thread'
+
+require 'poseidon'
+require 'zk'
 
 module Poseidon::Cluster
   MAX_INT32 = 0x7fffffff
@@ -12,7 +12,15 @@ module Poseidon::Cluster
   # @return [Integer] an incremented number
   # @api private
   def self.inc!
-    @@sem.synchronize { @@inc += 1; @@inc = 1 if @@inc > MAX_INT32; @@inc }
+    @@sem.synchronize do
+      @@inc += 1;
+
+      if @@inc > MAX_INT32
+        @@inc = 1
+      end
+
+      @@inc
+    end
   end
 
   # @return [String] an globally unique identifier
@@ -20,9 +28,6 @@ module Poseidon::Cluster
   def self.guid
     [::Socket.gethostname, ::Process.pid, ::Time.now.nsec, inc!].join('-')
   end
-
 end
 
-%w|consumer_group|.each do |name|
-  require "poseidon/#{name}"
-end
+require 'poseidon/consumer_group'
