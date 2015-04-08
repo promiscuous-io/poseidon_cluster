@@ -96,7 +96,7 @@ class Poseidon::ConsumerGroup
   def initialize(name, brokers, zookeepers, topic, options = {})
     @name       = name
     @topic      = topic
-    @zk         = ::ZK.new(zookeepers.join(","))
+    @zk         = ::ZK.new(zookeepers.join(','), {:thread => :per_callback})
     # Poseidon::BrokerPool doesn't provide default value for this option
     # Configuring default value like this isn't beautiful, though.. by kssminus
     options[:socket_timeout_ms] ||= 10000
