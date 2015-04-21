@@ -26,7 +26,7 @@ module Poseidon::Cluster
   # @return [String] an globally unique identifier
   # @api private
   def self.guid
-    [::Socket.gethostname, ::Process.pid, ::Time.now.nsec, inc!].join('-')
+    [::Socket.gethostname, ::Process.pid, inc!].join('-')
   end
 end
 

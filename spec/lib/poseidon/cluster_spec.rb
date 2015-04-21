@@ -13,7 +13,7 @@ describe Poseidon::Cluster do
   end
 
   it 'should generate GUIDs' do
-    described_class.guid.should match(/\A[\w\-\.]+?\-\d{1,5}\-\d{9}\-\d{1,3}\z/)
+    described_class.guid.should match(/\A[\w\-\.]+?\-\d{1,5}\-\d{1,3}\z/)
   end
 
 end
