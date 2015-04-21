@@ -5,11 +5,11 @@ Gem::Specification.new do |s|
   s.name        = File.basename(__FILE__, '.gemspec')
   s.summary     = "Poseidon cluster extensions"
   s.description = "Cluster extensions for Poseidon, a producer and consumer implementation for Kafka >= 0.8"
-  s.version     = "0.3.0"
+  s.version     = "0.4.1"
 
-  s.authors     = ["Black Square Media"]
-  s.email       = "info@blacksquaremedia.com"
-  s.homepage    = "https://github.com/bsm/poseidon_cluster"
+  s.authors     = ["Black Square Media", "Crowdtap Inc."]
+  s.email       = "ops@crowdtap.com"
+  s.homepage    = "https://github.com/promiscuous-io/poseidon_cluster"
 
   s.require_path = 'lib'
   s.files        = `git ls-files`.split("\n")
@@ -24,5 +24,4 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rspec-its"
   s.add_development_dependency "yard"
   s.add_development_dependency "coveralls"
-
 end
