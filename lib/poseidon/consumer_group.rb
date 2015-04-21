@@ -35,11 +35,17 @@ class Poseidon::ConsumerGroup
 
     # @api private
     def initialize(group, partition, options = {})
+      opts   = options.dup
       broker = group.leader(partition)
       offset = group.offset(partition)
-      offset = (options[:trail] ? :latest_offset : :earliest_offset) if offset == 0
-      options.delete(:trail)
-      super group.id, broker.host, broker.port, group.topic, partition, offset, options
+      offset = (opts[:trail] ? :latest_offset : :earliest_offset) if offset == 0
+
+      # Remove unsupported options for Poseidon::PartitionConsumer
+      opts.delete(:claim_timeout)
+      opts.delete(:register)
+      opts.delete(:trail)
+
+      super(group.id, broker.host, broker.port, group.topic, partition, offset, opts)
     end
   end
 
