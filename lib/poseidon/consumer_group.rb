@@ -397,7 +397,6 @@ class Poseidon::ConsumerGroup
   private
 
     # Claim the ownership of the partition for this consumer
-    # @raise [Timeout::Error]
     def claim!(partition)
       sleep_duration = 0.1
       num_tries = ((options[:claim_timout] || DEFAULT_CLAIM_TIMEOUT)/sleep_duration).floor.to_i
