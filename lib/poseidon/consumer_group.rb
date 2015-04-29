@@ -110,7 +110,6 @@ class Poseidon::ConsumerGroup
     @consumers  = []
     @pool       = ::Poseidon::BrokerPool.new(id, brokers, options[:socket_timeout_ms])
     @mutex      = Mutex.new
-    @registered = false
 
     register! unless options[:register] == false
   end
@@ -141,7 +140,7 @@ class Poseidon::ConsumerGroup
 
   # @return [Boolean] true if registered
   def registered?
-    @registered
+    !!zk.children(consumer_path, ignore: :no_node)
   end
 
   # @return [Boolean] true if registration was successful, false if already registered
@@ -155,9 +154,7 @@ class Poseidon::ConsumerGroup
     zk.create(consumer_path, "{}", {:ephemeral => true})
     zk.register(registries[:consumer]) { rebalance! }
 
-    # Rebalance
     rebalance!
-    @registered = true
   end
 
   # Reloads metadata/broker/partition information
@@ -234,6 +231,8 @@ class Poseidon::ConsumerGroup
   #
   # @api public
   def checkout(opts = {})
+    register!
+
     consumer = nil
     commit   = @mutex.synchronize do
       consumer = @consumers.shift

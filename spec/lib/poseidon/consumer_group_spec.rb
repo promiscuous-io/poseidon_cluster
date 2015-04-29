@@ -29,7 +29,7 @@ describe Poseidon::ConsumerGroup do
   end
 
   let :zk_client do
-    double "ZK", mkdir_p: nil, get: nil, set: nil, delete: nil, create: "/path", register: nil, children: ["my-group-UNIQUEID"], close: nil
+    double "ZK", mkdir_p: nil, get: nil, set: nil, delete: nil, create: "/path", register: nil, close: nil
   end
 
   let(:group) { described_class.new "my-group", ["localhost:29092", "localhost:29091"], ["localhost:22181"], "mytopic" }
@@ -37,6 +37,7 @@ describe Poseidon::ConsumerGroup do
 
   before do
     allow(ZK).to receive_messages(new: zk_client)
+    allow(zk_client).to receive(:children).and_return(nil, ["my-group-UNIQUEID"])
     allow(Poseidon::Cluster).to receive_messages(guid: "UNIQUEID")
     allow_any_instance_of(Poseidon::ConsumerGroup).to receive(:sleep)
     allow_any_instance_of(Poseidon::PartitionConsumer).to receive_messages(resolve_offset_if_necessary: 0)
