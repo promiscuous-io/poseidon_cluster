@@ -373,7 +373,12 @@ class Poseidon::ConsumerGroup
     # * let POS be our index position in CG and let N = size(PT)/size(CG)
     # * assign partitions from POS*N to (POS+1)*N-1
     def rebalance!
+      return if @rebalancing
+
+      @rebalancing = true
       @mutex.synchronize do
+        @rebalancing = nil
+
         release_all!
         reload_metadata
 
@@ -384,6 +389,11 @@ class Poseidon::ConsumerGroup
         return if responsible_for.nil?
 
         partition_list[responsible_for].each do |partition|
+          if @rebalancing
+            release_all!
+            break
+          end
+
           if consumer = claim!(partition.id)
             @consumers.push(consumer)
           end
@@ -408,6 +418,8 @@ class Poseidon::ConsumerGroup
       created = nil
 
       num_tries.times do
+        return nil if @rebalancing
+
         created = zk.create(claim_path(partition), id, {:ephemeral => true, :ignore => :node_exists})
         break if created
 
