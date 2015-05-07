@@ -84,7 +84,7 @@ module Scenario
     sh "cd #{ROOT} && curl http://www.mirrorservice.org/sites/ftp.apache.org/kafka/#{VERSION}/kafka_2.10-#{VERSION}.tgz | tar xz"
   end
 
-  def checkpoint!(timeout = 10)
+  def checkpoint!(timeout = 30)
     puts "--> Verifying #{@@total}"
     timeout.times do
       if numlines > @@total

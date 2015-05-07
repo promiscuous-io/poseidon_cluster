@@ -171,6 +171,30 @@ describe Poseidon::ConsumerGroup do
       -> { subject.send :rebalance! }.should change { subject.claimed }.to([0])
     end
 
+    it "should wait for consumer to commit manually all messages before rebalancing" do
+      consumer = nil
+      subject.checkout(commit: false) { |c| consumer = c }
+
+      t = Thread.new { subject.send :rebalance! }
+
+      sleep 0.1
+      t.alive?.should == true
+
+      payloads = consumer.fetch
+      subject.commit(consumer.partition, payloads.shift.offset + 1)
+
+      sleep 0.1
+      t.alive?.should == true
+
+      payloads.each do |payload|
+        subject.commit(consumer.partition, payload.offset + 1)
+      end
+
+      sleep 0.1
+      t.alive?.should == false
+
+      t.join
+    end
   end
 
   describe "fetch" do

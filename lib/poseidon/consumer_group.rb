@@ -169,7 +169,7 @@ class Poseidon::ConsumerGroup
   # Closes the consumer group gracefully, only really useful in tests
   # @api private
   def close
-    @mutex.synchronize { release_all! }
+    synchronize { release_all! }
     zk.close
   end
 
@@ -193,6 +193,8 @@ class Poseidon::ConsumerGroup
     zk.set(offset_path(partition), offset.to_s)
   rescue ZK::Exceptions::NoNode
     zk.create(offset_path(partition), offset.to_s, {:ignore => :node_exists})
+  ensure
+    unlock(offset)
   end
 
   # Sorted partitions by broker address (so partitions on the same broker are clustered together)
@@ -232,21 +234,21 @@ class Poseidon::ConsumerGroup
   # @api public
   def checkout(opts = {})
     register!
+    lock
 
-    consumer = nil
-    commit   = @mutex.synchronize do
-      consumer = @consumers.shift
-      return false unless consumer
+    @current_consumer = @consumers.shift
+    return false unless @current_consumer
 
-      @consumers.push consumer
-      yield consumer
-    end
+    @consumers.push @current_consumer
+    commit = yield @current_consumer
 
     unless opts[:commit] == false || commit == false
-      commit consumer.partition, consumer.offset
+      commit @current_consumer.partition, @current_consumer.offset
     end
 
     true
+  rescue StandardError
+    unlock
   end
 
   # Convenience method to fetch messages from the broker.
@@ -376,7 +378,7 @@ class Poseidon::ConsumerGroup
       return if @rebalancing
 
       @rebalancing = true
-      @mutex.synchronize do
+      synchronize do
         @rebalancing = nil
 
         release_all!
@@ -410,6 +412,23 @@ class Poseidon::ConsumerGroup
     end
 
   private
+    def lock
+      @mutex.lock
+    end
+
+    def unlock(offset=nil)
+      raise "Mutex should be locked, possibly committing out of order" unless  @mutex.locked?
+
+      if offset
+        @mutex.unlock if @current_consumer.offset == offset
+      else
+        @mutex.unlock
+      end
+    end
+
+    def synchronize
+      @mutex.synchronize { yield }
+    end
 
     # Claim the ownership of the partition for this consumer
     def claim!(partition)
