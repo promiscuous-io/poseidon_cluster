@@ -49,22 +49,25 @@ class Poseidon::ConsumerGroup
     end
   end
 
-  # @param [Integer] pnum number of partitions size
-  # @param [Array<String>] cids consumer IDs
-  # @param [String] id consumer ID
-  # @return [Range, NilClass] selectable range, if any
-  def self.pick(pnum, cids, id)
-    cids = cids.sort
-    pos  = cids.index(id)
-    return unless pos && pos < cids.size
+  # @param [Integer] partition_count number of partitions size
+  # @param [Array<String>] consumer_ids consumer IDs
+  # @param [String] consumer_id consumer ID
+  # @return [Array, NilClass] array of partitions the consumer is responsible for, if any
+  def self.pick(partition_count, consumer_ids, consumer_id)
+    consumer_ids = consumer_ids.sort
+    index = consumer_ids.index(consumer_id)
+    return unless index && index < consumer_ids.size
 
-    step = pnum.fdiv(cids.size).ceil
-    frst = pos*step
-    last = (pos+1)*step-1
-    last = pnum-1 if last > pnum-1
-    return if last < 0 || last < frst
+    partitions_per_consumer = partition_count / consumer_ids.size
+    extra_partitions = partition_count % consumer_ids.size
 
-    (frst..last)
+    partitions_for_me = partitions_per_consumer + (index+1 > extra_partitions ? 0 : 1)
+    return if partitions_for_me == 0
+
+    first = partitions_per_consumer * index + (index < extra_partitions ? index : extra_partitions)
+    last = first + partitions_for_me - 1
+
+    (first..last)
   end
 
   # @attr_reader [String] name Group name
