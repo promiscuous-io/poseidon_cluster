@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    promiscuous-poseidon_cluster (0.4.1)
+    promiscuous-poseidon_cluster (0.5.1)
       poseidon (>= 0.0.5.pre1)
       zk
 

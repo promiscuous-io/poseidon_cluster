@@ -125,9 +125,10 @@ class Poseidon::ConsumerGroup
   # @return [Hash<Symbol,String>] registry paths
   def registries
     @registries ||= {
+      brokers:  "/brokers/topics/#{name}",
       consumer: "/consumers/#{name}/ids",
       owner:    "/consumers/#{name}/owners/#{topic}",
-      offset:   "/consumers/#{name}/offsets/#{topic}",
+      offset:   "/consumers/#{name}/offsets/#{topic}"
     }
   end
 
@@ -155,6 +156,7 @@ class Poseidon::ConsumerGroup
       zk.mkdir_p(path)
     end
     zk.create(consumer_path, "{}", {:ephemeral => true})
+    zk.register(registries[:brokers]) { rebalance! }
     zk.register(registries[:consumer]) { rebalance! }
 
     rebalance!
@@ -386,6 +388,9 @@ class Poseidon::ConsumerGroup
 
         release_all!
         reload_metadata
+
+        # make sure we rebalance when partition ownership changes
+        zk.stat(registries[:brokers], {:watch => true})
 
         consumer_ids    = zk.children(registries[:consumer], {:watch => true}).sort
         partition_list  = partitions

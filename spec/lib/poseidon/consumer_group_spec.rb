@@ -38,6 +38,7 @@ describe Poseidon::ConsumerGroup do
   before do
     allow(ZK).to receive_messages(new: zk_client)
     allow(zk_client).to receive(:children).and_return(nil, ["my-group-UNIQUEID"])
+    allow(zk_client).to receive(:stat)
     allow(Poseidon::Cluster).to receive_messages(guid: "UNIQUEID")
     allow_any_instance_of(Poseidon::ConsumerGroup).to receive(:sleep)
     allow_any_instance_of(Poseidon::PartitionConsumer).to receive_messages(resolve_offset_if_necessary: 0)
@@ -58,6 +59,7 @@ describe Poseidon::ConsumerGroup do
   its(:metadata)       { should be_instance_of(Poseidon::ClusterMetadata) }
   its(:topic_metadata) { should be_instance_of(Poseidon::TopicMetadata) }
   its(:registries)     { should == {
+    brokers:  "/brokers/topics/my-group",
     consumer: "/consumers/my-group/ids",
     owner:    "/consumers/my-group/owners/mytopic",
     offset:   "/consumers/my-group/offsets/mytopic",
