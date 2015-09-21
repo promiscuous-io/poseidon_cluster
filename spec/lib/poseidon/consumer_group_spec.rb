@@ -59,7 +59,7 @@ describe Poseidon::ConsumerGroup do
   its(:metadata)       { should be_instance_of(Poseidon::ClusterMetadata) }
   its(:topic_metadata) { should be_instance_of(Poseidon::TopicMetadata) }
   its(:registries)     { should == {
-    brokers:  "/brokers/topics/my-group",
+    brokers:  "/brokers/topics/mytopic",
     consumer: "/consumers/my-group/ids",
     owner:    "/consumers/my-group/owners/mytopic",
     offset:   "/consumers/my-group/offsets/mytopic",

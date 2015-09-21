@@ -125,7 +125,7 @@ class Poseidon::ConsumerGroup
   # @return [Hash<Symbol,String>] registry paths
   def registries
     @registries ||= {
-      brokers:  "/brokers/topics/#{name}",
+      brokers:  "/brokers/topics/#{topic}",
       consumer: "/consumers/#{name}/ids",
       owner:    "/consumers/#{name}/owners/#{topic}",
       offset:   "/consumers/#{name}/offsets/#{topic}"
